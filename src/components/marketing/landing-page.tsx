@@ -1,259 +1,45 @@
+"use client";
+
 import Image from "next/image";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  ChevronDown,
-  Play,
-  Sparkles,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, Check, Sparkles } from "lucide-react";
+import { Hero } from "./hero";
 
-const heroImage =
-  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90";
-const detailImage =
-  "https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&w=1400&q=90";
-const stylingImage =
-  "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=1400&q=90";
-
-function BrandMark() {
-  return (
-    <a className="inline-flex items-center gap-[0.55rem] font-[Georgia,serif] text-[0.93rem] tracking-[0.03em]" href="#top" aria-label="Perfection home">
-      <span className="inline-flex h-[1.65rem] w-[1.65rem] items-center justify-center rounded-full border border-burgundy font-[Georgia,serif] text-[0.75rem] text-burgundy">P</span>
-      <span>Perfection</span>
-    </a>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="relative z-[1] mx-auto flex max-w-[1240px] items-center justify-between px-[4.5rem] pt-8 pb-[1.2rem] animate-reveal-down max-[900px]:px-6 max-[900px]:py-[1.4rem]">
-      <BrandMark />
-      <nav className="ml-32 flex gap-8 max-[900px]:hidden" aria-label="Primary navigation">
-        <a href="#how-it-works" className="text-[0.7rem] uppercase tracking-[0.05em] text-muted-ink transition-colors hover:text-burgundy">How it works</a>
-        <a href="#experience" className="text-[0.7rem] uppercase tracking-[0.05em] text-muted-ink transition-colors hover:text-burgundy">The experience</a>
-        <a href="#about" className="text-[0.7rem] uppercase tracking-[0.05em] text-muted-ink transition-colors hover:text-burgundy">About</a>
-      </nav>
-      <div className="flex items-center gap-6">
-        <a className="text-[0.7rem] uppercase tracking-[0.05em] text-muted-ink transition-colors hover:text-burgundy max-[900px]:hidden" href="/login">
-          Sign in
-        </a>
-        <a className="btn-primary btn-primary-hover btn-small" href="/signup">
-          Start styling <ArrowUpRight size={14} strokeWidth={1.8} />
-        </a>
-      </div>
-    </header>
-  );
-}
+const looks = [
+  { image: "/image/looks_for_real_life.webp", title: "Looks for real life", text: "From first meetings to last-minute plans, get dressed with intention." },
+  { image: "/image/a_little_more_for_you.webp", title: "A little more you", text: "Thoughtful recommendations that sharpen your instincts, not replace them." },
+  { image: "/image/perfection_16.webp", title: "Your style, decoded", text: "A visual language built from the details that make you, you." },
+];
 
 export function LandingPage() {
   return (
-    <main id="top" className="relative min-h-screen overflow-hidden">
-      {/* Wash gradient */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-[1] h-[43rem]"
-        style={{ background: "radial-gradient(circle at 75% 9%, rgba(195,165,110,.22), transparent 22rem), linear-gradient(120deg, #f7f0e9 20%, #e5d4c9 100%)" }}
-        aria-hidden="true"
-      />
+    <main className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
+      <Hero />
 
-      <SiteHeader />
-
-      {/* ── Hero ── */}
-      <section
-        className="mx-auto grid min-h-[43rem] max-w-[1240px] items-center gap-16 px-[4.5rem] pt-16 pb-28 max-[900px]:flex max-[900px]:flex-col max-[900px]:gap-8 max-[900px]:px-6 max-[900px]:pt-12 max-[900px]:pb-20"
-        style={{ gridTemplateColumns: "minmax(17rem, .75fr) minmax(32rem, 1.25fr)" }}
-        aria-labelledby="hero-title"
-      >
-        <div className="relative z-[1] pl-16 max-[900px]:pl-0">
-          <p className="mb-[1.6rem] flex items-center gap-[0.45rem] text-[0.64rem] uppercase tracking-[0.14em] text-burgundy animate-reveal-up">
-            <Sparkles size={13} /> AI personal styling, reimagined
-          </p>
-          <h1 id="hero-title" className="m-0 font-[Georgia,'Times_New_Roman',serif] text-[clamp(4rem,7vw,7rem)] font-normal leading-[0.86] tracking-[-0.045em] text-burgundy animate-reveal-up-1">
-            Your beauty.<br /><em className="italic text-taupe">Perfected.</em>
-          </h1>
-          <p className="mt-8 mb-8 max-w-[25rem] text-[0.95rem] leading-[1.8] text-muted-ink animate-reveal-up-2">
-            A personal stylist that sees the details, understands the occasion,
-            and creates a complete look that feels unmistakably yours.
-          </p>
-          <div className="flex flex-wrap items-center gap-6 animate-reveal-up-3">
-            <a className="btn-primary btn-primary-hover" href="/signup">
-              Discover your style <ArrowUpRight size={16} strokeWidth={1.8} />
-            </a>
-            <a className="inline-flex items-center gap-[0.55rem] border-b border-line pb-[0.4rem] text-[0.7rem] uppercase tracking-[0.06em] text-burgundy transition-all hover:gap-[0.8rem] hover:border-burgundy" href="#how-it-works">
-              See how it works <ArrowDownRight size={16} strokeWidth={1.8} />
-            </a>
-          </div>
-          <p className="mt-20 font-[Georgia,serif] text-[0.78rem] italic text-taupe animate-reveal-up-4">
-            A considered look for every important moment.
-          </p>
+      <section id="experience" className="editorial-grid border-b border-[var(--line)] bg-[#e9ded3]">
+        <div className="relative min-h-[28rem] overflow-hidden md:min-h-[38rem]">
+          <Image src="/image/landing_pic.webp" alt="A person discovering a new routine" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover object-center" />
         </div>
-
-        <div className="relative min-h-[35rem] max-[900px]:min-h-[27rem] max-[900px]:w-full">
-          <div className="animate-image-reveal relative h-[35rem] overflow-hidden max-[900px]:h-[27rem] after:absolute after:inset-0 after:bg-gradient-to-b after:from-[rgba(25,12,14,0.05)] after:to-[rgba(25,12,14,0.55)] after:content-['']">
-            <Image
-              src={heroImage}
-              alt="A bride and groom dressed for their wedding at golden hour"
-              fill
-              priority
-              sizes="(max-width: 800px) 90vw, 52vw"
-              className="object-cover transition-transform duration-[1.2s] [object-position:57%_center] hover:scale-[1.035]"
-              style={{ transitionTimingFunction: "cubic-bezier(.2,.7,.2,1)" }}
-            />
-            <div className="absolute bottom-[1.1rem] left-[1.2rem] z-[1] text-[0.58rem] uppercase tracking-[0.12em] text-white">
-              01 / For the moment that matters
-            </div>
-          </div>
-          <div className="absolute -left-16 bottom-12 z-[2] flex w-48 items-center gap-4 bg-paper p-[1.2rem_1.3rem] shadow-[0_1.5rem_3rem_rgba(33,21,27,0.18)] animate-card-arrive max-[900px]:bottom-[-1.2rem] max-[900px]:left-4">
-            <span className="h-8 w-px bg-burgundy" />
-            <p className="m-0 mr-auto font-[Georgia,serif] text-[0.78rem] leading-[1.15] text-muted-ink">
-              Personalized<br /><strong className="text-base font-normal text-burgundy">to you</strong>
-            </p>
-            <ArrowUpRight size={18} strokeWidth={1.5} />
-          </div>
-          <div className="absolute -bottom-10 -right-8 z-[2] flex h-32 w-32 items-center justify-center rounded-full border border-white/75 font-[Georgia,serif] text-6xl text-white animate-stamp-arrive max-[900px]:-bottom-8 max-[900px]:-right-[0.8rem]" style={{ transform: "rotate(14deg)" }} aria-hidden="true">
-            P
-          </div>
+        <div className="flex flex-col justify-center px-8 py-16 sm:px-14 lg:px-24">
+          <p className="eyebrow">The Perfection experience</p>
+          <h2 className="display mt-5 max-w-xl">Style is personal. Your tools should be too.</h2>
+          <p className="body-copy mt-6 max-w-md">Perfection brings your wardrobe, your features, your mood, and your moment into one considered point of view.</p>
+          <Link href="/signup" className="button-dark mt-9 w-fit">Build your profile <ArrowUpRight size={15} /></Link>
         </div>
       </section>
 
-      {/* ── Intro ── */}
-      <section
-        id="experience"
-        className="scroll-reveal relative grid w-full items-end gap-24 bg-aubergine text-[#f7eee8] before:pointer-events-none before:absolute before:inset-4 before:border before:border-champagne/35 before:content-[''] max-[900px]:flex max-[900px]:flex-col max-[900px]:gap-10 max-[900px]:px-6 max-[900px]:py-20"
-        style={{ gridTemplateColumns: "1fr .75fr", padding: "7rem max(8.5rem, calc((100vw - 1240px) / 2 + 8.5rem))" }}
-        aria-labelledby="intro-title"
-      >
-        <div>
-          <p className="mb-[1.6rem] flex items-center gap-[0.45rem] text-[0.64rem] uppercase tracking-[0.14em] text-champagne">
-            More than a recommendation
-          </p>
-          <h2 id="intro-title" className="m-0 font-[Georgia,'Times_New_Roman',serif] text-[clamp(2.5rem,4vw,4.5rem)] font-normal leading-[0.98] tracking-[-0.045em] text-[#f7eee8]">
-            Elegance comes from being understood.
-          </h2>
-        </div>
-        <p className="max-w-[25rem] text-[0.95rem] leading-[1.8] text-[#cdbeb7]">
-          Perfection brings your features, preferences, and destination into one
-          point of view—so getting ready feels less like searching and more like
-          being seen.
-        </p>
+      <section id="styling-rite" className="section-shell">
+        <div className="section-heading"><div><p className="eyebrow">A better way to get ready</p><h2 className="display mt-4 max-w-xl">Your everyday edit.</h2></div><p className="body-copy max-w-sm">Three small shifts that make every decision feel more like yours.</p></div>
+        <div className="mt-12 grid gap-5 md:grid-cols-3">{looks.map((look, index) => <article key={look.title} className="group"><div className="image-card"><Image src={look.image} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition duration-700 group-hover:scale-105" /><span className="image-index">0{index + 1}</span></div><h3 className="serif-title mt-5">{look.title}</h3><p className="body-copy mt-2 max-w-xs">{look.text}</p></article>)}</div>
       </section>
 
-      {/* ── Showcase / How it works ── */}
-      <section
-        id="how-it-works"
-        className="scroll-reveal mx-auto grid max-w-[1240px] items-center gap-24 px-[8.5rem] py-32 max-[900px]:flex max-[900px]:flex-col max-[900px]:gap-10 max-[900px]:px-6 max-[900px]:py-20"
-        style={{ gridTemplateColumns: ".85fr 1fr" }}
-        aria-labelledby="showcase-title"
-      >
-        <div className="relative h-[38rem] overflow-hidden shadow-[1.5rem_1.5rem_0_#e1d0c4] max-[900px]:h-[30rem] max-[900px]:w-full">
-          <Image
-            src={detailImage}
-            alt="Close-up beauty portrait used to demonstrate skin analysis"
-            fill
-            sizes="(max-width: 800px) 90vw, 42vw"
-            className="object-cover transition-transform duration-1000 [object-position:center_37%] hover:scale-[1.025]"
-            style={{ transitionTimingFunction: "cubic-bezier(.2,.7,.2,1)" }}
-          />
-          {/* Skin analysis overlay */}
-          <div className="absolute inset-0 z-[2]" aria-label="Example AI analysis: warm neutral skin tone">
-            <span className="absolute left-[39%] top-[54%] h-4 w-4 rounded-full border border-white/90 animate-target-pulse after:absolute after:inset-[0.28rem] after:rounded-full after:bg-white after:content-[''] max-[900px]:left-[35%]" />
-            <span className="absolute left-[calc(39%+1rem)] top-[calc(54%+0.5rem)] h-px w-[24%] origin-left bg-white animate-line-draw max-[900px]:left-[calc(35%+1rem)] max-[900px]:w-[23%]" />
-            <div className="absolute left-[62%] top-[45%] z-[2] flex w-[9.5rem] flex-col gap-[0.35rem] bg-[rgba(28,18,22,0.78)] px-4 py-[0.85rem] text-white backdrop-blur-[12px] animate-reveal-left max-[900px]:left-[57%] max-[900px]:w-[8.8rem]">
-              <span className="text-[0.52rem] uppercase tracking-[0.1em] text-[#d9c9c0]">Skin analysis</span>
-              <strong className="font-[Georgia,serif] text-[0.95rem] font-normal">Warm neutral</strong>
-              <div className="my-[0.2rem] flex gap-[0.35rem]" aria-hidden="true">
-                <i className="block h-4 w-4 rounded-full border border-white/50 bg-[#d9a27f]" />
-                <i className="block h-4 w-4 rounded-full border border-white/50 bg-[#bc7959]" />
-                <i className="block h-4 w-4 rounded-full border border-white/50 bg-[#8f4f3f]" />
-              </div>
-              <small className="text-[0.52rem] uppercase tracking-[0.1em] text-[#d9c9c0]">92% confidence</small>
-            </div>
-          </div>
-          <div className="absolute bottom-[1.1rem] left-[1.2rem] z-[1] text-[0.58rem] uppercase tracking-[0.12em] text-white">
-            Your beauty profile / 01
-          </div>
-        </div>
+      <section className="border-y border-[var(--line)] bg-[#f5efe9] px-6 py-20 sm:px-12 lg:px-24"><div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center"><div><p className="eyebrow">Why choose Perfection</p><h2 className="display mt-5 max-w-lg">Less noise. More instinct.</h2><p className="body-copy mt-6 max-w-md">No endless scrolling, no one-size-fits-all rules. Just a calm, intelligent place to find what works for you.</p><Link href="/signup" className="button-outline mt-8 w-fit">Start your edit <ArrowUpRight size={15} /></Link></div><div className="rounded-sm border border-[var(--line)] bg-white/70 p-5 sm:p-8"><div className="grid grid-cols-[1.4fr_1fr_1fr] border-b border-[var(--line)] pb-4 text-[10px] uppercase tracking-[.16em] text-[var(--taupe)]"><span>Features</span><span className="text-center">Perfection</span><span className="text-center">The usual way</span></div>{["Personal recommendations","Built around your context","A point of view that evolves"].map((item)=><div key={item} className="grid grid-cols-[1.4fr_1fr_1fr] items-center border-b border-[var(--line)] py-5 text-sm"><span>{item}</span><span className="mx-auto grid h-6 w-6 place-items-center rounded-full bg-[#dbe6d6] text-[#47623e]"><Check size={14}/></span><span className="mx-auto text-[var(--taupe)]">—</span></div>)}</div></div></section>
 
-        <div className="pr-8 max-[900px]:max-w-full max-[900px]:p-0">
-          <p className="mb-[1.6rem] flex items-center gap-[0.45rem] text-[0.64rem] uppercase tracking-[0.14em] text-burgundy">
-            A stylist with a point of view
-          </p>
-          <h2 id="showcase-title" className="m-0 font-[Georgia,'Times_New_Roman',serif] text-[clamp(2.5rem,4vw,4.5rem)] font-normal leading-[0.98] tracking-[-0.045em] text-burgundy">
-            The details make<br /><em className="italic text-taupe">the look.</em>
-          </h2>
-          <p className="my-8 max-w-[25rem] text-[0.95rem] leading-[1.8] text-muted-ink">
-            From your undertone to the way you want to feel walking into a room,
-            every recommendation is shaped around the real you.
-          </p>
-          <div className="my-12 border-t border-line">
-            <div className="grid gap-3 border-b border-line py-4" style={{ gridTemplateColumns: "2rem 1fr" }}>
-              <span className="text-[0.65rem] text-taupe">01</span>
-              <strong className="font-[Georgia,serif] text-base font-normal text-burgundy">Understand</strong>
-              <small className="col-start-2 text-[0.72rem] leading-[1.5] text-muted-ink">We read the details that make your beauty yours.</small>
-            </div>
-            <div className="grid gap-3 border-b border-line py-4" style={{ gridTemplateColumns: "2rem 1fr" }}>
-              <span className="text-[0.65rem] text-taupe">02</span>
-              <strong className="font-[Georgia,serif] text-base font-normal text-burgundy">Compose</strong>
-              <small className="col-start-2 text-[0.72rem] leading-[1.5] text-muted-ink">We build one considered look, from hair to heel.</small>
-            </div>
-            <div className="grid gap-3 border-b border-line py-4" style={{ gridTemplateColumns: "2rem 1fr" }}>
-              <span className="text-[0.65rem] text-taupe">03</span>
-              <strong className="font-[Georgia,serif] text-base font-normal text-burgundy">Refine</strong>
-              <small className="col-start-2 text-[0.72rem] leading-[1.5] text-muted-ink">You choose what feels right. Perfection remembers.</small>
-            </div>
-          </div>
-          <a className="inline-flex items-center gap-[0.55rem] border-b border-line pb-[0.4rem] text-[0.7rem] uppercase tracking-[0.06em] text-burgundy transition-all hover:gap-[0.8rem] hover:border-burgundy" href="/signup">
-            Explore the experience <ArrowUpRight size={16} strokeWidth={1.8} />
-          </a>
-        </div>
-      </section>
+      <section className="editorial-grid bg-[#d5c4b2]"><div className="relative min-h-[27rem] md:min-h-[34rem]"><Image src="/image/get_ready_for_the_life_you_live.webp" alt="A confident personal style moment" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover object-center" /></div><div className="flex flex-col justify-center px-8 py-16 sm:px-14 lg:px-24"><p className="eyebrow">A ritual for a mindful life</p><h2 className="display mt-5 max-w-md">Get ready for the life you actually live.</h2><p className="body-copy mt-6 max-w-md">Perfection turns the blank closet moment into a small act of self-trust.</p><Link href="/signup" className="button-dark mt-9 w-fit">Meet your stylist <ArrowUpRight size={15}/></Link></div></section>
 
-      {/* ── Style Preview ── */}
-      <section
-        id="about"
-        className="scroll-reveal relative w-full max-[900px]:px-6 max-[900px]:pb-20 max-[900px]:pt-6"
-        style={{ background: "linear-gradient(135deg, #d8bdad, #c5a18d)", padding: "2rem max(8.5rem, calc((100vw - 1240px) / 2 + 8.5rem)) 7rem" }}
-        aria-labelledby="style-preview-title"
-      >
-        <div className="flex justify-between border-b border-burgundy/25 pb-4 text-[0.62rem] uppercase tracking-[0.12em] text-burgundy">
-          <span>Inside your style report</span><span>02 / 04</span>
-        </div>
-        <div
-          className="grid items-center gap-16 pt-20 max-[900px]:flex max-[900px]:flex-col max-[900px]:items-start max-[900px]:gap-12 max-[900px]:pt-16"
-          style={{ gridTemplateColumns: "1fr .72fr .35fr" }}
-        >
-          <div>
-            <p className="mb-[1.6rem] flex items-center gap-[0.45rem] text-[0.64rem] uppercase tracking-[0.14em] text-burgundy">
-              A complete point of view
-            </p>
-            <h2 id="style-preview-title" className="m-0 font-[Georgia,'Times_New_Roman',serif] text-[clamp(2.5rem,4vw,4.5rem)] font-normal leading-[0.98] tracking-[-0.045em] text-burgundy">
-              One look.<br /><em className="italic text-taupe">Beautifully considered.</em>
-            </h2>
-            <p className="mt-8 max-w-[25rem] text-[0.95rem] leading-[1.8] text-muted-ink">
-              Hair, color, silhouette, accessories—everything in conversation.
-            </p>
-          </div>
-          <div className="bg-paper shadow-[1.2rem_1.2rem_0_rgba(65,19,25,0.18),0_2rem_4rem_rgba(33,21,27,0.14)] rotate-2 transition-transform duration-500 hover:rotate-0 hover:-translate-y-2 max-[900px]:max-w-[20rem] max-[900px]:self-center" style={{ transitionTimingFunction: "cubic-bezier(.2,.7,.2,1)" }}>
-            <div className="relative h-64 overflow-hidden">
-              <Image src={stylingImage} alt="Editorial model in an elegant plum evening dress" fill sizes="(max-width: 800px) 80vw, 25vw" className="object-cover" />
-            </div>
-            <div className="flex flex-col gap-[0.45rem] p-[1.2rem]">
-              <span className="text-[0.63rem] uppercase tracking-[0.08em] text-muted-ink">Suggested direction</span>
-              <strong className="font-[Georgia,serif] text-[1.2rem] font-normal text-burgundy">Quiet confidence</strong>
-              <small className="text-[0.63rem] uppercase tracking-[0.08em] text-muted-ink">Soft contrast · Sculpted line · Rosewood</small>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-[0.8rem] justify-self-end font-[Georgia,serif] text-[0.8rem] text-burgundy text-center max-[900px]:self-center max-[900px]:justify-self-auto">
-            <Play size={17} fill="currentColor" />
-            <span>See a sample look</span>
-          </div>
-        </div>
-      </section>
+      <section id="journal" className="section-shell"><div className="text-center"><p className="eyebrow">Notes from the edit</p><h2 className="display mt-4">The journal</h2></div><div className="mt-12 grid gap-5 md:grid-cols-3">{[{title:"The art of a signature", image:"/image/perfect_11.webp"},{title:"Dress for the energy", image:"/image/dress_for_the_energy.webp"},{title:"A softer morning", image:"/image/a_softer_momorning.webp"}].map((post)=><article key={post.title} className="border-t border-[var(--line)] pt-4"><div className="relative aspect-[1.5] overflow-hidden rounded-[10px]"><Image src={post.image} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" /></div><p className="eyebrow mt-5">The Perfection journal</p><h3 className="serif-title mt-2">{post.title}</h3><Link href="/signup" className="inline-flex items-center gap-2 pt-5 text-xs uppercase tracking-[.14em]">Read the note <ArrowUpRight size={14}/></Link></article>)}</div></section>
 
-      {/* ── Footer ── */}
-      <footer id="start" className="flex w-full items-center justify-between bg-aubergine px-[max(4.5rem,calc((100vw-1240px)/2+4.5rem))] py-12 text-[#f7eee8] max-[900px]:flex-col max-[900px]:items-start max-[900px]:gap-6 max-[900px]:px-6 max-[900px]:py-10">
-        <BrandMark />
-        <p className="m-0 font-[Georgia,serif] text-[0.85rem] italic text-[#bdaea8]">For every version of you.</p>
-        <a className="btn-primary btn-primary-hover btn-small" href="#top">Begin your journey <ChevronDown size={14} /></a>
-      </footer>
+      <footer className="bg-[#171615] px-6 py-16 text-[#f7f1eb] sm:px-12 lg:px-24"><div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]"><div><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-full bg-[#f7f1eb] text-[#171615]"><Sparkles size={16}/></div><span className="relative block h-8 w-40"><Image src="/image/perfection_logo_transparent.webp" alt="Perfection" fill sizes="160px" className="object-contain object-left brightness-0 invert" /></span></div><p className="mt-6 max-w-xs text-sm leading-7 text-white/60">A personal stylist for the way you move through the world.</p></div><div><p className="eyebrow text-white/50">Explore</p><div className="mt-5 grid gap-3 text-sm text-white/75"><a href="#experience">The experience</a><a href="#styling-rite">Your edit</a><a href="#journal">Journal</a></div></div><div><p className="eyebrow text-white/50">Connect</p><div className="mt-5 grid gap-3 text-sm text-white/75"><a href="mailto:hello@perfection.style">hello@perfection.style</a><a href="#top">Instagram</a></div></div><div><p className="eyebrow text-white/50">Ready when you are</p><p className="mt-5 text-sm leading-6 text-white/70">Start with a few questions. Leave with a clearer point of view.</p><Link href="/signup" className="button-light mt-6 w-fit">Create your profile <ArrowUpRight size={15}/></Link></div></div><div className="mx-auto mt-16 max-w-6xl border-t border-white/15 pt-5 text-[10px] uppercase tracking-[.16em] text-white/40">© 2026 Perfection. Made for your everyday.</div></footer>
     </main>
   );
 }
