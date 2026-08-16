@@ -92,7 +92,7 @@ function VerifyForm() {
               inputMode="numeric"
               maxLength={1}
               aria-label={`Digit ${i + 1}`}
-              className="h-12 w-9 border border-[var(--line)] bg-[var(--paper)] text-center font-mono text-lg font-medium text-[var(--ink)] outline-none transition-colors focus:border-[var(--burgundy)] sm:h-14 sm:w-11 sm:text-xl"
+              className="h-12 w-9 rounded-[10px] border border-[var(--line)] bg-white/80 text-center font-mono text-lg font-medium text-[var(--ink)] outline-none transition-all focus:border-[var(--burgundy)] focus:ring-4 focus:ring-[var(--burgundy)]/8 sm:h-14 sm:w-11 sm:text-xl"
               onInput={(e) => handleInput(i, e.currentTarget.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
             />
@@ -106,7 +106,7 @@ function VerifyForm() {
         <button
           type="submit"
           disabled={pending || !isComplete}
-          className="inline-flex items-center justify-center gap-2 bg-[var(--burgundy)] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.08em] text-[#fff9f7] shadow-[0_1rem_2rem_rgba(85,19,27,0.12)] transition-all hover:bg-[#3c0b12] hover:shadow-[0_1.2rem_2.4rem_rgba(85,19,27,0.2)] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+          className="inline-flex items-center justify-center gap-2 rounded-[6px] bg-[var(--burgundy)] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.08em] text-[#fff9f7] shadow-[0_1rem_2rem_rgba(85,19,27,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[#3c0b12] hover:shadow-[0_1.2rem_2.4rem_rgba(85,19,27,0.2)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
         >
           {pending ? "Verifying…" : "Verify & continue"}
         </button>

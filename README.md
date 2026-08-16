@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Product integration
+
+See [PERFECT_CORP_API_PLAN.md](./PERFECT_CORP_API_PLAN.md) for the selected face, clothing, shoes, jewelry, and makeup try-on APIs and the implementation sequence.
+
 ## Getting Started
 
 First, run the development server:

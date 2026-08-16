@@ -36,7 +36,7 @@ export default function SignupPage() {
             type="text"
             required
             autoComplete="name"
-            className="border border-[var(--line)] bg-[var(--paper)] px-4 py-3 text-sm text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--blush)] focus:border-[var(--burgundy)]"
+            className="rounded-[10px] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm text-[var(--ink)] outline-none transition-all placeholder:text-[var(--taupe)]/55 focus:border-[var(--burgundy)] focus:ring-4 focus:ring-[var(--burgundy)]/8"
             placeholder="Your full name"
           />
           {state?.fieldErrors?.fullName && (
@@ -54,7 +54,7 @@ export default function SignupPage() {
             type="email"
             required
             autoComplete="email"
-            className="border border-[var(--line)] bg-[var(--paper)] px-4 py-3 text-sm text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--blush)] focus:border-[var(--burgundy)]"
+            className="rounded-[10px] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm text-[var(--ink)] outline-none transition-all placeholder:text-[var(--taupe)]/55 focus:border-[var(--burgundy)] focus:ring-4 focus:ring-[var(--burgundy)]/8"
             placeholder="you@example.com"
           />
           {state?.fieldErrors?.email && (
@@ -73,7 +73,7 @@ export default function SignupPage() {
               type={showPassword ? "text" : "password"}
               required
               autoComplete="new-password"
-              className="w-full border border-[var(--line)] bg-[var(--paper)] px-4 py-3 pr-11 text-sm text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--blush)] focus:border-[var(--burgundy)]"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-white/80 px-4 py-3 pr-11 text-sm text-[var(--ink)] outline-none transition-all placeholder:text-[var(--taupe)]/55 focus:border-[var(--burgundy)] focus:ring-4 focus:ring-[var(--burgundy)]/8"
               placeholder="8+ characters"
             />
             <button
@@ -97,7 +97,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 inline-flex items-center justify-center gap-2 bg-[var(--burgundy)] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.08em] text-[#fff9f7] shadow-[0_1rem_2rem_rgba(85,19,27,0.12)] transition-all hover:bg-[#3c0b12] hover:shadow-[0_1.2rem_2.4rem_rgba(85,19,27,0.2)] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-[6px] bg-[var(--burgundy)] px-5 py-3.5 text-xs font-medium uppercase tracking-[0.08em] text-[#fff9f7] shadow-[0_1rem_2rem_rgba(85,19,27,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[#3c0b12] hover:shadow-[0_1.2rem_2.4rem_rgba(85,19,27,0.2)] disabled:opacity-50 disabled:hover:translate-y-0"
         >
           {pending ? "Creating account…" : "Create account"}
           {!pending && <ArrowUpRight size={14} strokeWidth={1.8} />}
