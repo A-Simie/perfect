@@ -1,4 +1,5 @@
 import type { BlazeFaceModel, NormalizedFace } from "@tensorflow-models/blazeface";
+import type { FaceLandmarksDetector, Keypoint } from "@tensorflow-models/face-landmarks-detection";
 
 export type BeautyProfilePreflightCheck = {
   id: "face" | "framing" | "position" | "lighting" | "sharpness";
@@ -13,6 +14,16 @@ export type BeautyProfilePreflightResult = {
   faceDetected: boolean;
   faceCoverage: number | null;
   faceBounds: { x: number; y: number; width: number; height: number } | null;
+  faceLandmarks: {
+    screenLeftEye: { x: number; y: number };
+    screenRightEye: { x: number; y: number };
+    screenLeftEyebrow?: { x: number; y: number };
+    screenRightEyebrow?: { x: number; y: number };
+    screenLeftCheek?: { x: number; y: number };
+    screenRightCheek?: { x: number; y: number };
+    nose: { x: number; y: number };
+    mouth: { x: number; y: number };
+  } | null;
   brightness: number;
   contrast: number;
   sharpness: number;
@@ -20,6 +31,7 @@ export type BeautyProfilePreflightResult = {
 };
 
 let modelPromise: Promise<BlazeFaceModel> | null = null;
+let faceMeshPromise: Promise<FaceLandmarksDetector> | null = null;
 
 async function getFaceModel() {
   if (!modelPromise) {
@@ -31,6 +43,18 @@ async function getFaceModel() {
     );
   }
   return modelPromise;
+}
+
+async function getFaceMesh() {
+  if (!faceMeshPromise) {
+    faceMeshPromise = Promise.all([
+      import("@tensorflow/tfjs"),
+      import("@tensorflow-models/face-landmarks-detection/dist/tfjs/detector"),
+    ]).then(([, faceMesh]) =>
+      faceMesh.load({ runtime: "tfjs", maxFaces: 1, refineLandmarks: true })
+    );
+  }
+  return faceMeshPromise;
 }
 
 function buildCanvas(source: CanvasImageSource, width: number, height: number) {
@@ -97,11 +121,11 @@ function faceChecks(faces: NormalizedFace[], width: number, height: number) {
   const checks: BeautyProfilePreflightCheck[] = [];
   if (faces.length === 0) {
     checks.push({ id: "face", label: "One visible face", detail: "No face found. Look directly at the camera.", status: "fail" });
-    return { checks, faceCoverage: null, faceBounds: null };
+    return { checks, faceCoverage: null, faceBounds: null, faceLandmarks: null };
   }
   if (faces.length > 1) {
     checks.push({ id: "face", label: "One visible face", detail: "Only one person should be in the photo.", status: "fail" });
-    return { checks, faceCoverage: null, faceBounds: null };
+    return { checks, faceCoverage: null, faceBounds: null, faceLandmarks: null };
   }
 
   const face = faces[0];
@@ -114,6 +138,22 @@ function faceChecks(faces: NormalizedFace[], width: number, height: number) {
   const centerY = (topLeft[1] + faceHeight / 2) / height;
   const centered = Math.abs(centerX - 0.5) <= 0.18 && centerY >= 0.28 && centerY <= 0.68;
   const forward = isFacingForward(face, faceWidth);
+  const landmarks = Array.isArray(face.landmarks) ? face.landmarks : null;
+  const normalizedLandmark = (landmark: number[] | undefined) =>
+    landmark ? { x: landmark[0] / width, y: landmark[1] / height } : null;
+  const [rightEye, leftEye, nose, mouth] = landmarks ?? [];
+  const eyes = [normalizedLandmark(rightEye), normalizedLandmark(leftEye)]
+    .filter((eye): eye is { x: number; y: number } => Boolean(eye))
+    .sort((first, second) => first.x - second.x);
+  const normalizedLandmarks = {
+    screenLeftEye: eyes[0] ?? null,
+    screenRightEye: eyes[1] ?? null,
+    nose: normalizedLandmark(nose),
+    mouth: normalizedLandmark(mouth),
+  };
+  const faceLandmarks = Object.values(normalizedLandmarks).every(Boolean)
+    ? normalizedLandmarks as BeautyProfilePreflightResult["faceLandmarks"]
+    : null;
 
   checks.push({ id: "face", label: "One visible face", detail: "Face detected.", status: "pass" });
   checks.push({
@@ -142,6 +182,7 @@ function faceChecks(faces: NormalizedFace[], width: number, height: number) {
       width: faceWidth / width,
       height: faceHeight / height,
     },
+    faceLandmarks,
   };
 }
 
@@ -154,7 +195,7 @@ export async function inspectBeautyProfileImage(
   const metrics = measureImage(context, canvas.width, canvas.height);
   const model = await getFaceModel();
   const faces = await model.estimateFaces(canvas, false, false, true);
-  const { checks, faceCoverage, faceBounds } = faceChecks(faces, canvas.width, canvas.height);
+  const { checks, faceCoverage, faceBounds, faceLandmarks } = faceChecks(faces, canvas.width, canvas.height);
 
   const lightingPass = metrics.brightness >= 35 && metrics.brightness <= 230;
   checks.push({
@@ -187,6 +228,7 @@ export async function inspectBeautyProfileImage(
     faceDetected: faces.length === 1,
     faceCoverage,
     faceBounds,
+    faceLandmarks,
     ...metrics,
     checks,
   };
@@ -248,4 +290,143 @@ export async function normalizeBeautyProfileFile(file: File, result: BeautyProfi
 export async function inspectBeautyProfileFile(file: File) {
   const image = await loadImage(file);
   return inspectBeautyProfileImage(image, image.naturalWidth, image.naturalHeight);
+}
+
+function averageKeypoints(keypoints: Keypoint[], indices: number[], width: number, height: number) {
+  const points = indices.map((index) => keypoints[index]).filter(Boolean);
+  if (points.length === 0) return null;
+  const total = points.reduce(
+    (sum, keypoint) => ({ x: sum.x + keypoint.x, y: sum.y + keypoint.y }),
+    { x: 0, y: 0 }
+  );
+  return { x: total.x / points.length / width, y: total.y / points.length / height };
+}
+
+export async function refineBeautyProfileLandmarks(
+  file: File,
+  result: BeautyProfilePreflightResult
+): Promise<BeautyProfilePreflightResult> {
+  try {
+    const image = await loadImage(file);
+    const { canvas } = buildCanvas(image, image.naturalWidth, image.naturalHeight);
+    const { MEDIAPIPE_FACE_MESH_KEYPOINTS_BY_CONTOUR: contours } = await import(
+      "@tensorflow-models/face-landmarks-detection/dist/constants"
+    );
+    const detector = await getFaceMesh();
+    const [face] = await detector.estimateFaces(canvas, { staticImageMode: true });
+    if (!face) return result;
+    const orderByX = (points: Array<{ x: number; y: number } | null>) =>
+      points.filter((value): value is { x: number; y: number } => Boolean(value))
+        .sort((first, second) => first.x - second.x);
+    const eyes = orderByX([
+      averageKeypoints(face.keypoints, contours.leftEye, canvas.width, canvas.height),
+      averageKeypoints(face.keypoints, contours.rightEye, canvas.width, canvas.height),
+    ]);
+    const eyebrows = orderByX([
+      averageKeypoints(face.keypoints, contours.leftEyebrow, canvas.width, canvas.height),
+      averageKeypoints(face.keypoints, contours.rightEyebrow, canvas.width, canvas.height),
+    ]);
+    const cheeks = orderByX([
+      averageKeypoints(face.keypoints, [205], canvas.width, canvas.height),
+      averageKeypoints(face.keypoints, [425], canvas.width, canvas.height),
+    ]);
+    const mouth = averageKeypoints(face.keypoints, contours.lips, canvas.width, canvas.height);
+    const nose = averageKeypoints(face.keypoints, [1], canvas.width, canvas.height);
+    if (eyes.length !== 2 || eyebrows.length !== 2 || cheeks.length !== 2 || !mouth || !nose) return result;
+
+    return {
+      ...result,
+      faceLandmarks: {
+        screenLeftEye: eyes[0],
+        screenRightEye: eyes[1],
+        screenLeftEyebrow: eyebrows[0],
+        screenRightEyebrow: eyebrows[1],
+        screenLeftCheek: cheeks[0],
+        screenRightCheek: cheeks[1],
+        mouth,
+        nose,
+      },
+    };
+  } catch {
+    return result;
+  }
+}
+
+export type HairColorEstimate = {
+  color: string;
+  name: string;
+  anchor: { x: number; y: number };
+};
+
+function hairColorName(red: number, green: number, blue: number) {
+  const brightness = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+  const spread = Math.max(red, green, blue) - Math.min(red, green, blue);
+  if (brightness < 52) return "Black";
+  if (spread < 20 && brightness > 145) return "Grey/White";
+  if (red > green * 1.22 && red > blue * 1.3) return brightness > 105 ? "Red" : "Auburn";
+  if (brightness > 145 && red > blue + 12) return "Blonde";
+  return "Brown";
+}
+
+export async function estimateHairColor(
+  file: File,
+  result: BeautyProfilePreflightResult
+): Promise<HairColorEstimate | null> {
+  if (!result.faceBounds) return null;
+  const image = await loadImage(file);
+  const { canvas, context } = buildCanvas(image, image.naturalWidth, image.naturalHeight);
+  const face = result.faceBounds;
+  const left = Math.max(0, Math.round((face.x + face.width * 0.16) * canvas.width));
+  const right = Math.min(canvas.width, Math.round((face.x + face.width * 0.84) * canvas.width));
+  // Keep the sample above the forehead so skin pixels do not pull the hair result downward.
+  const top = Math.max(0, Math.round((face.y - face.height * 0.34) * canvas.height));
+  const bottom = Math.min(canvas.height, Math.round((face.y - face.height * 0.015) * canvas.height));
+  if (right <= left || bottom <= top) return null;
+
+  const { data } = context.getImageData(left, top, right - left, bottom - top);
+  const regionWidth = right - left;
+  const pixels: Array<{ red: number; green: number; blue: number; brightness: number; x: number; y: number }> = [];
+  for (let index = 0; index < data.length; index += 16) {
+    const red = data[index];
+    const green = data[index + 1];
+    const blue = data[index + 2];
+    const brightness = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+    const pixelIndex = index / 4;
+    if (brightness < 245) {
+      pixels.push({
+        red,
+        green,
+        blue,
+        brightness,
+        x: left + pixelIndex % regionWidth,
+        y: top + Math.floor(pixelIndex / regionWidth),
+      });
+    }
+  }
+  if (pixels.length < 20) return null;
+
+  pixels.sort((a, b) => a.brightness - b.brightness);
+  const selected = pixels.slice(0, Math.max(20, Math.round(pixels.length * 0.62)));
+  const average = selected.reduce(
+    (total, pixel) => ({
+      red: total.red + pixel.red,
+      green: total.green + pixel.green,
+      blue: total.blue + pixel.blue,
+      x: total.x + pixel.x,
+      y: total.y + pixel.y,
+    }),
+    { red: 0, green: 0, blue: 0, x: 0, y: 0 }
+  );
+  const red = Math.round(average.red / selected.length);
+  const green = Math.round(average.green / selected.length);
+  const blue = Math.round(average.blue / selected.length);
+  const color = `#${[red, green, blue].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+  return {
+    color,
+    name: hairColorName(red, green, blue),
+    anchor: {
+      x: average.x / selected.length / canvas.width,
+      y: average.y / selected.length / canvas.height,
+    },
+  };
 }

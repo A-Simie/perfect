@@ -50,7 +50,10 @@ const perfectTaskSchema = z.object({
     error: z.unknown().optional().nullable(),
     error_message: z.string().optional().nullable(),
     task_status: z.string(),
-    results: perfectColorResultSchema.optional().nullable(),
+    results: z
+      .object({ color: perfectColorResultSchema })
+      .optional()
+      .nullable(),
   }),
 });
 

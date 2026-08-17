@@ -105,6 +105,7 @@ function normalizeResult(result: PerfectColorResult): BeautyColorProfile {
     eyebrowColor: result.eyebrow_color,
     hairColor: result.hair_color,
     hairColorName: result.hair_color_name,
+    hairColorSource: "provider" as const,
   };
   return { ...colors, palette: createBeautyPalette(colors) };
 }
@@ -124,6 +125,6 @@ export async function getBeautyProfileTask(taskId: string): Promise<BeautyProfil
     );
   }
   if (payload.data.task_status !== "success") return { status: "running" };
-  if (!payload.data.results) throw new PerfectCorpError("The completed profile contained no color results.");
-  return { status: "success", result: normalizeResult(payload.data.results) };
+  if (!payload.data.results?.color) throw new PerfectCorpError("The completed profile contained no color results.");
+  return { status: "success", result: normalizeResult(payload.data.results.color) };
 }

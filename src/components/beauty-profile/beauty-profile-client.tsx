@@ -22,10 +22,14 @@ import {
   validateBeautyProfileFile,
 } from "@/lib/beauty-profile/beauty-profile.client";
 import {
+  estimateHairColor,
   inspectBeautyProfileFile,
   normalizeBeautyProfileFile,
+  refineBeautyProfileLandmarks,
   type BeautyProfilePreflightResult,
+  type HairColorEstimate,
 } from "@/lib/beauty-profile/beauty-profile-preflight";
+import { createBeautyPalette } from "@/lib/beauty-profile/beauty-profile.palette";
 import type {
   BeautyColorProfile,
   BeautyProfileWorkflowStage,
@@ -46,17 +50,6 @@ const stageCopy: Record<
   processing: { label: "Building your palette", detail: "This usually takes less than a minute." },
 };
 
-function PhotoFrame({ url, label }: { url: string | null; label: string }) {
-  return (
-    <div
-      role="img"
-      aria-label={label}
-      className="aspect-[4/5] w-full overflow-hidden rounded-[8px] bg-[var(--surface-container-high)] bg-cover bg-center"
-      style={url ? { backgroundImage: `url(${JSON.stringify(url).slice(1, -1)})` } : undefined}
-    />
-  );
-}
-
 function ColorSwatch({ label, color, detail }: { label: string; color: string; detail?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-3 border-b border-[var(--line)] py-2.5">
@@ -69,13 +62,103 @@ function ColorSwatch({ label, color, detail }: { label: string; color: string; d
   );
 }
 
+function colorDistance(first: string, second: string) {
+  const channels = (color: string) => {
+    const value = color.replace("#", "");
+    return [0, 2, 4].map((index) => Number.parseInt(value.slice(index, index + 2), 16));
+  };
+  const [firstRed, firstGreen, firstBlue] = channels(first);
+  const [secondRed, secondGreen, secondBlue] = channels(second);
+  return Math.hypot(firstRed - secondRed, firstGreen - secondGreen, firstBlue - secondBlue);
+}
+
+function reconcileHairColor(result: BeautyColorProfile, estimate: HairColorEstimate | null) {
+  if (!estimate || colorDistance(result.hairColor, estimate.color) < 95) return result;
+  const corrected = {
+    ...result,
+    hairColor: estimate.color,
+    hairColorName: estimate.name,
+    hairColorSource: "photo-cross-check" as const,
+  };
+  return {
+    ...corrected,
+    palette: createBeautyPalette(corrected),
+  };
+}
+
+function AnnotatedPortrait({
+  portraitUrl,
+  result,
+  faceBounds,
+  faceLandmarks,
+  hairAnchor,
+}: {
+  portraitUrl: string | null;
+  result: BeautyColorProfile;
+  faceBounds: BeautyProfilePreflightResult["faceBounds"];
+  faceLandmarks: BeautyProfilePreflightResult["faceLandmarks"];
+  hairAnchor: HairColorEstimate["anchor"] | null;
+}) {
+  const face = faceBounds ?? { x: 0.18, y: 0.12, width: 0.64, height: 0.72 };
+  const point = (x: number, y: number) => ({
+    x: Math.max(3, Math.min(97, x * 100)),
+    y: Math.max(3, Math.min(97, y * 100)),
+  });
+  const screenLeftEye = faceLandmarks?.screenLeftEye ?? { x: face.x + face.width * 0.3, y: face.y + face.height * 0.36 };
+  const screenRightEye = faceLandmarks?.screenRightEye ?? { x: face.x + face.width * 0.68, y: face.y + face.height * 0.36 };
+  const screenRightEyebrow = faceLandmarks?.screenRightEyebrow ?? { x: screenRightEye.x, y: screenRightEye.y - face.height * 0.1 };
+  const screenLeftCheek = faceLandmarks?.screenLeftCheek ?? { x: screenLeftEye.x - face.width * 0.12, y: screenLeftEye.y + face.height * 0.16 };
+  const mouth = faceLandmarks?.mouth ?? { x: face.x + face.width * 0.5, y: face.y + face.height * 0.73 };
+  const callouts = [
+    { label: "Hair color", color: result.hairColor, detail: result.hairColorName, side: "left", labelClass: "left-2 top-[10%]", start: { x: 27, y: 15 }, anchor: point(hairAnchor?.x ?? face.x + face.width * 0.5, hairAnchor?.y ?? face.y - face.height * 0.12) },
+    { label: "Eyebrow color", color: result.eyebrowColor, side: "right", labelClass: "right-2 top-[22%]", start: { x: 73, y: 27 }, anchor: point(screenRightEyebrow.x, screenRightEyebrow.y) },
+    { label: "Eye color", color: result.eyeColor, detail: result.eyeColorName, side: "left", labelClass: "left-2 top-[40%]", start: { x: 27, y: 45 }, anchor: point(screenLeftEye.x, screenLeftEye.y) },
+    { label: "Lip color", color: result.lipColor, side: "right", labelClass: "right-2 top-[59%]", start: { x: 73, y: 64 }, anchor: point(mouth.x, mouth.y) },
+    { label: "Skin tone", color: result.skinColor, side: "left", labelClass: "left-2 bottom-[13%]", start: { x: 27, y: 82 }, anchor: point(screenLeftCheek.x, screenLeftCheek.y) },
+  ];
+
+  return (
+    <div role="img" aria-label="Your analyzed portrait with detected color callouts" className="relative aspect-[4/5] overflow-hidden rounded-[8px] bg-[var(--surface-container-high)]">
+      {portraitUrl ? (
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(portraitUrl).slice(1, -1)})` }} />
+      ) : (
+        <div className="absolute inset-0 grid place-items-center text-sm text-[var(--muted-ink)]">Portrait unavailable</div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-black/35" />
+      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {callouts.map((callout) => {
+          return (
+            <g key={callout.label}>
+              <path d={`M ${callout.start.x} ${callout.start.y} L ${callout.anchor.x} ${callout.anchor.y}`} fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="0.35" />
+              <circle cx={callout.anchor.x} cy={callout.anchor.y} r="1.2" fill="rgba(20,16,16,0.38)" stroke="white" strokeWidth="0.45" />
+            </g>
+          );
+        })}
+      </svg>
+      {callouts.map((callout) => (
+        <div key={callout.label} className={`absolute ${callout.labelClass} max-w-[42%] text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] sm:text-[11px]`}>
+          <span className="mr-1.5 inline-block h-3.5 w-3.5 rounded-full border-2 border-white align-[-2px]" style={{ backgroundColor: callout.color }} />
+          {callout.label}
+          {callout.detail && <span className="mt-1 block pl-5 text-[9px] font-normal normal-case tracking-normal text-white/80">{callout.detail}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ResultsView({
   result,
   portraitUrl,
+  faceBounds,
+  faceLandmarks,
+  hairAnchor,
   onReset,
 }: {
   result: BeautyColorProfile;
   portraitUrl: string | null;
+  faceBounds: BeautyProfilePreflightResult["faceBounds"];
+  faceLandmarks: BeautyProfilePreflightResult["faceLandmarks"];
+  hairAnchor: HairColorEstimate["anchor"] | null;
   onReset: () => void;
 }) {
   const detectedColors = [
@@ -83,7 +166,7 @@ function ResultsView({
     { label: "Eyes", color: result.eyeColor, detail: result.eyeColorName },
     { label: "Lips", color: result.lipColor },
     { label: "Brows", color: result.eyebrowColor },
-    { label: "Hair", color: result.hairColor, detail: result.hairColorName },
+    { label: "Hair", color: result.hairColor, detail: `${result.hairColorName}${result.hairColorSource === "photo-cross-check" ? " · Photo cross-check" : ""}` },
   ];
 
   return (
@@ -99,9 +182,9 @@ function ResultsView({
         <button type="button" onClick={onReset} className="button-outline w-fit"><RefreshCw size={14} /> New photo</button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <div className="mx-auto w-full max-w-60 lg:mx-0">
-          <PhotoFrame url={portraitUrl} label="Your Beauty Profile portrait" />
+      <div className="grid gap-5 lg:grid-cols-[minmax(18rem,27rem)_minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="mx-auto w-full max-w-[27rem] lg:mx-0">
+          <AnnotatedPortrait portraitUrl={portraitUrl} result={result} faceBounds={faceBounds} faceLandmarks={faceLandmarks} hairAnchor={hairAnchor} />
           <div className="mt-3 flex flex-wrap gap-2">
             {result.palette.paletteTags.map((tag) => (
               <span key={tag} className="rounded-full bg-[var(--sage-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--sage-ink)]">{tag}</span>
@@ -165,6 +248,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [fileSource, setFileSource] = useState<"camera" | "upload" | null>(null);
   const [preflight, setPreflight] = useState<BeautyProfilePreflightResult | null>(null);
+  const [hairEstimate, setHairEstimate] = useState<HairColorEstimate | null>(null);
   const [isCheckingPhoto, setIsCheckingPhoto] = useState(false);
 
   useEffect(() => () => {
@@ -177,11 +261,14 @@ export function BeautyProfileClient({ firstName }: Props) {
     setCameraOpen(false);
     setStage("validating");
     setPreflight(null);
+    setHairEstimate(null);
     setIsCheckingPhoto(true);
     const validationError = await validateBeautyProfileFile(nextFile);
     if (validationError) {
       setFile(null);
       setFileSource(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
       setStage("idle");
       toast.error(validationError);
       setIsCheckingPhoto(false);
@@ -190,15 +277,18 @@ export function BeautyProfileClient({ firstName }: Props) {
 
     try {
       const initialPreflight = await inspectBeautyProfileFile(nextFile);
-      const preparedFile = await normalizeBeautyProfileFile(nextFile, initialPreflight);
-      const nextPreflight = preparedFile === nextFile
+      const preparedFile = source === "camera" ? nextFile : await normalizeBeautyProfileFile(nextFile, initialPreflight);
+      const inspectedPreflight = preparedFile === nextFile
         ? initialPreflight
         : await inspectBeautyProfileFile(preparedFile);
+      const nextPreflight = await refineBeautyProfileLandmarks(preparedFile, inspectedPreflight);
+      const nextHairEstimate = await estimateHairColor(preparedFile, nextPreflight);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(preparedFile);
       setFileSource(source);
       setPreviewUrl(URL.createObjectURL(preparedFile));
       setPreflight(nextPreflight);
+      setHairEstimate(nextHairEstimate);
       if (nextPreflight.status === "error") toast.error(nextPreflight.guidance);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not inspect that image.");
@@ -218,6 +308,7 @@ export function BeautyProfileClient({ firstName }: Props) {
     setCameraOpen(false);
     setFileSource(null);
     setPreflight(null);
+    setHairEstimate(null);
     setAttempt(0);
     setStage("idle");
     setStageDetail("JPEG or PNG, up to 10 MB.");
@@ -238,7 +329,8 @@ export function BeautyProfileClient({ firstName }: Props) {
       const { taskId, pollToken } = await startBeautyProfile(reservation.fileId);
       setStage("processing");
       setStageDetail(stageCopy.processing.detail);
-      setResult(await pollBeautyProfile(taskId, pollToken, controller.signal, setAttempt));
+      const providerResult = await pollBeautyProfile(taskId, pollToken, controller.signal, setAttempt);
+      setResult(reconcileHairColor(providerResult, hairEstimate));
       setStage("success");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -250,7 +342,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   };
 
   if (stage === "success" && result) {
-    return <ResultsView result={result} portraitUrl={previewUrl} onReset={reset} />;
+    return <ResultsView result={result} portraitUrl={previewUrl} faceBounds={preflight?.faceBounds ?? null} faceLandmarks={preflight?.faceLandmarks ?? null} hairAnchor={hairEstimate?.anchor ?? null} onReset={reset} />;
   }
 
   const isWorking = ["validating", "uploading", "starting", "processing"].includes(stage);

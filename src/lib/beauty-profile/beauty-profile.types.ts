@@ -24,6 +24,7 @@ export type BeautyColorProfile = {
   eyebrowColor: string;
   hairColor: string;
   hairColorName: string;
+  hairColorSource: "provider" | "photo-cross-check";
   palette: BeautyPalette;
 };
 
