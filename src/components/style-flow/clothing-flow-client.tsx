@@ -51,7 +51,7 @@ export function ClothingFlowClient() {
     try { const dataUrl = await bodyPreview(file); updateStyleFlow({ bodyDataUrl: dataUrl }); setFlow((current) => current ? { ...current, bodyDataUrl: dataUrl } : current); } catch (error) { toast.error(error instanceof Error ? error.message : "We could not prepare that image."); }
   };
 
-  const useSampleBody = async () => {
+  const loadSampleBody = async () => {
     const presentation = flow.presentation === "male" ? "masculine" : "feminine";
     try {
       const response = await fetch(`/catalog/sample-body-${presentation}.jpg`);
@@ -93,7 +93,7 @@ export function ClothingFlowClient() {
               <p className="font-semibold text-[var(--ink)]">For a successful clothing try-on</p>
               <p>Show one person from head to feet, standing straight and facing forward. Keep arms away from the outfit and use an image at least 480 px on its shortest side.</p>
             </div>
-            <button type="button" onClick={() => void useSampleBody()} className="button-outline shrink-0"><FileImage size={14} /> Use demo photo</button>
+            <button type="button" onClick={() => void loadSampleBody()} className="button-outline shrink-0"><FileImage size={14} /> Use demo photo</button>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {focusOptions.map((option) => {
