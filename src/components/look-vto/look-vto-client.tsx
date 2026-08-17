@@ -10,6 +10,7 @@ type Props = {
   sourceFileId: string;
   portraitUrl: string | null;
   paletteTags: string[];
+  onResult?: (resultUrl: string) => void;
 };
 
 const paletteKeywords: Record<string, string[]> = {
@@ -31,7 +32,7 @@ function recommendTemplate(templates: LookTemplate[], paletteTags: string[]) {
   })[0] ?? null;
 }
 
-export function LookVtoClient({ sourceFileId, portraitUrl, paletteTags }: Props) {
+export function LookVtoClient({ sourceFileId, portraitUrl, paletteTags, onResult }: Props) {
   const abortRef = useRef<AbortController | null>(null);
   const [templates, setTemplates] = useState<LookTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -72,7 +73,9 @@ export function LookVtoClient({ sourceFileId, portraitUrl, paletteTags }: Props)
     setAttempt(0);
     try {
       const task = await startLookTryOn(sourceFileId, selectedTemplate.id, controller.signal);
-      setResultUrl(await pollLookTryOn(task.taskId, task.pollToken, controller.signal, setAttempt));
+      const nextResultUrl = await pollLookTryOn(task.taskId, task.pollToken, controller.signal, setAttempt);
+      setResultUrl(nextResultUrl);
+      onResult?.(nextResultUrl);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error(error instanceof Error ? error.message : "The makeup look could not be applied.");

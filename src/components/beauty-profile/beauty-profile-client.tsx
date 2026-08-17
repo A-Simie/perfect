@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Camera,
@@ -37,7 +38,7 @@ import type {
 import { BeautyProfileCamera } from "./beauty-profile-camera";
 import { BeautyProfilePreflight } from "./beauty-profile-preflight";
 import { BeautyProfileProcessing } from "./beauty-profile-processing";
-import { LookVtoClient } from "@/components/look-vto/look-vto-client";
+import { writeStyleFlow, type MakeupPreference } from "@/lib/style-flow/style-flow.storage";
 
 type Props = { firstName: string };
 
@@ -150,6 +151,7 @@ function AnnotatedPortrait({
 function ResultsView({
   result,
   portraitUrl,
+  portraitDataUrl,
   faceBounds,
   faceLandmarks,
   hairAnchor,
@@ -158,12 +160,14 @@ function ResultsView({
 }: {
   result: BeautyColorProfile;
   portraitUrl: string | null;
+  portraitDataUrl: string | null;
   faceBounds: BeautyProfilePreflightResult["faceBounds"];
   faceLandmarks: BeautyProfilePreflightResult["faceLandmarks"];
   hairAnchor: HairColorEstimate["anchor"] | null;
   sourceFileId: string | null;
   onReset: () => void;
 }) {
+  const router = useRouter();
   const detectedColors = [
     { label: "Skin", color: result.skinColor },
     { label: "Eyes", color: result.eyeColor, detail: result.eyeColorName },
@@ -171,6 +175,38 @@ function ResultsView({
     { label: "Brows", color: result.eyebrowColor },
     { label: "Hair", color: result.hairColor, detail: `${result.hairColorName}${result.hairColorSource === "photo-cross-check" ? " · Photo cross-check" : ""}` },
   ];
+
+  const continueStyling = (preference: MakeupPreference) => {
+    if (!sourceFileId || !portraitDataUrl) {
+      toast.error("Your portrait could not be prepared for the next step. Please create the palette again.");
+      return;
+    }
+    try {
+      writeStyleFlow({
+        sourceFileId,
+        portraitDataUrl,
+        profile: result,
+        makeupPreference: preference,
+        makeupResultUrl: null,
+        clothingFocus: null,
+        bodyFileId: null,
+        bodyDataUrl: null,
+        clothingResultUrl: null,
+        shoesResultUrl: null,
+        necklaceResultUrl: null,
+        shoePresentation: null,
+        presentation: null,
+        occasion: null,
+        clothingItemIndex: null,
+        shoesItemIndex: null,
+        necklaceItemIndex: null,
+        updatedAt: Date.now(),
+      });
+      router.push(preference === "include" ? "/makeup" : "/clothing");
+    } catch {
+      toast.error("This portrait is too large to carry into the next step. Try a smaller photo.");
+    }
+  };
 
   return (
     <section className="space-y-5">
@@ -220,12 +256,15 @@ function ResultsView({
             ))}
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4 rounded-[8px] bg-[var(--surface-container-low)] p-4">
+          <div className="mt-5 rounded-[8px] bg-[var(--surface-container-low)] p-4">
             <div>
-              <p className="text-xs font-semibold text-[var(--ink)]">Next: see the palette on your face</p>
-              <p className="mt-1 text-[11px] text-[var(--muted-ink)]">Look Virtual Try-On is the next integration slice.</p>
+              <p className="text-xs font-semibold text-[var(--ink)]">Would you like makeup included in your coordinated look?</p>
+              <p className="mt-1 text-[11px] leading-5 text-[var(--muted-ink)]">Choose based on your preference. Perfection does not infer this from your photo.</p>
             </div>
-            <ArrowRight size={18} className="shrink-0 text-[var(--burgundy)]" />
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={() => continueStyling("include")} className="button-dark">Include makeup <ArrowRight size={14} /></button>
+              <button type="button" onClick={() => continueStyling("skip")} className="button-outline">Skip to clothing <ArrowRight size={14} /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -234,7 +273,6 @@ function ResultsView({
         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-[var(--sage-ink)]" />
         <p>Your profile is a styling guide derived from detected colors, not a health or skincare assessment. The original photo is not saved by Perfection in this release.</p>
       </div>
-      {sourceFileId && <LookVtoClient sourceFileId={sourceFileId} portraitUrl={portraitUrl} paletteTags={result.palette.paletteTags} />}
     </section>
   );
 }
@@ -244,6 +282,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   const abortRef = useRef<AbortController | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [portraitDataUrl, setPortraitDataUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<BeautyProfileWorkflowStage>("idle");
   const [stageDetail, setStageDetail] = useState("JPEG or PNG, up to 10 MB.");
   const [attempt, setAttempt] = useState(0);
@@ -273,6 +312,7 @@ export function BeautyProfileClient({ firstName }: Props) {
     if (validationError) {
       setFile(null);
       setFileSource(null);
+      setPortraitDataUrl(null);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
       setStage("idle");
@@ -293,6 +333,12 @@ export function BeautyProfileClient({ firstName }: Props) {
       setFile(preparedFile);
       setFileSource(source);
       setPreviewUrl(URL.createObjectURL(preparedFile));
+      setPortraitDataUrl(await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("The portrait could not be prepared."));
+        reader.onerror = () => reject(new Error("The portrait could not be prepared."));
+        reader.readAsDataURL(preparedFile);
+      }));
       setPreflight(nextPreflight);
       setHairEstimate(nextHairEstimate);
       if (nextPreflight.status === "error") toast.error(nextPreflight.guidance);
@@ -310,6 +356,7 @@ export function BeautyProfileClient({ firstName }: Props) {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(null);
     setPreviewUrl(null);
+    setPortraitDataUrl(null);
     setResult(null);
     setCameraOpen(false);
     setFileSource(null);
@@ -350,7 +397,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   };
 
   if (stage === "success" && result) {
-    return <ResultsView result={result} portraitUrl={previewUrl} faceBounds={preflight?.faceBounds ?? null} faceLandmarks={preflight?.faceLandmarks ?? null} hairAnchor={hairEstimate?.anchor ?? null} sourceFileId={sourceFileId} onReset={reset} />;
+    return <ResultsView result={result} portraitUrl={previewUrl} portraitDataUrl={portraitDataUrl} faceBounds={preflight?.faceBounds ?? null} faceLandmarks={preflight?.faceLandmarks ?? null} hairAnchor={hairEstimate?.anchor ?? null} sourceFileId={sourceFileId} onReset={reset} />;
   }
 
   const isWorking = ["validating", "uploading", "starting", "processing"].includes(stage);
