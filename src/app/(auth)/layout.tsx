@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <main className="grid min-h-screen bg-[#efe6de] lg:grid-cols-[1.05fr_.95fr]">
       <section className="relative hidden min-h-screen overflow-hidden lg:block">
-        <Image src="/image/get_ready_for_the_life_you_live.webp" alt="A considered personal style moment" fill preload sizes="55vw" className="object-cover" />
+        <Image src="/image/stylist.webp" alt="A considered personal style moment" fill preload sizes="55vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#211815]/75 via-transparent to-[#211815]/15" />
         <div className="absolute inset-x-0 bottom-0 z-10 p-12 text-white xl:p-16">
           <p className="eyebrow text-white/80">Your style, made personal</p>

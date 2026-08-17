@@ -41,7 +41,7 @@ export function verifyTaskPollToken(userId: string, taskId: string, token: strin
   return expectedBuffer.length === tokenBuffer.length && timingSafeEqual(expectedBuffer, tokenBuffer);
 }
 
-async function requestPerfectCorp<T>(url: string, schema: z.ZodType<T>, init: RequestInit) {
+export async function requestPerfectCorp<T>(url: string, schema: z.ZodType<T>, init: RequestInit) {
   const response = await fetch(url, {
     ...init,
     cache: "no-store",

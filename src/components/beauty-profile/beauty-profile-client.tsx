@@ -37,6 +37,7 @@ import type {
 import { BeautyProfileCamera } from "./beauty-profile-camera";
 import { BeautyProfilePreflight } from "./beauty-profile-preflight";
 import { BeautyProfileProcessing } from "./beauty-profile-processing";
+import { LookVtoClient } from "@/components/look-vto/look-vto-client";
 
 type Props = { firstName: string };
 
@@ -152,6 +153,7 @@ function ResultsView({
   faceBounds,
   faceLandmarks,
   hairAnchor,
+  sourceFileId,
   onReset,
 }: {
   result: BeautyColorProfile;
@@ -159,6 +161,7 @@ function ResultsView({
   faceBounds: BeautyProfilePreflightResult["faceBounds"];
   faceLandmarks: BeautyProfilePreflightResult["faceLandmarks"];
   hairAnchor: HairColorEstimate["anchor"] | null;
+  sourceFileId: string | null;
   onReset: () => void;
 }) {
   const detectedColors = [
@@ -231,6 +234,7 @@ function ResultsView({
         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-[var(--sage-ink)]" />
         <p>Your profile is a styling guide derived from detected colors, not a health or skincare assessment. The original photo is not saved by Perfection in this release.</p>
       </div>
+      {sourceFileId && <LookVtoClient sourceFileId={sourceFileId} portraitUrl={portraitUrl} paletteTags={result.palette.paletteTags} />}
     </section>
   );
 }
@@ -249,6 +253,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   const [fileSource, setFileSource] = useState<"camera" | "upload" | null>(null);
   const [preflight, setPreflight] = useState<BeautyProfilePreflightResult | null>(null);
   const [hairEstimate, setHairEstimate] = useState<HairColorEstimate | null>(null);
+  const [sourceFileId, setSourceFileId] = useState<string | null>(null);
   const [isCheckingPhoto, setIsCheckingPhoto] = useState(false);
 
   useEffect(() => () => {
@@ -262,6 +267,7 @@ export function BeautyProfileClient({ firstName }: Props) {
     setStage("validating");
     setPreflight(null);
     setHairEstimate(null);
+    setSourceFileId(null);
     setIsCheckingPhoto(true);
     const validationError = await validateBeautyProfileFile(nextFile);
     if (validationError) {
@@ -309,6 +315,7 @@ export function BeautyProfileClient({ firstName }: Props) {
     setFileSource(null);
     setPreflight(null);
     setHairEstimate(null);
+    setSourceFileId(null);
     setAttempt(0);
     setStage("idle");
     setStageDetail("JPEG or PNG, up to 10 MB.");
@@ -324,6 +331,7 @@ export function BeautyProfileClient({ firstName }: Props) {
       setStageDetail(stageCopy.uploading.detail);
       const reservation = await reserveBeautyProfileUpload(file);
       await uploadBeautyProfileFile(file, reservation);
+      setSourceFileId(reservation.fileId);
       setStage("starting");
       setStageDetail(stageCopy.starting.detail);
       const { taskId, pollToken } = await startBeautyProfile(reservation.fileId);
@@ -342,7 +350,7 @@ export function BeautyProfileClient({ firstName }: Props) {
   };
 
   if (stage === "success" && result) {
-    return <ResultsView result={result} portraitUrl={previewUrl} faceBounds={preflight?.faceBounds ?? null} faceLandmarks={preflight?.faceLandmarks ?? null} hairAnchor={hairEstimate?.anchor ?? null} onReset={reset} />;
+    return <ResultsView result={result} portraitUrl={previewUrl} faceBounds={preflight?.faceBounds ?? null} faceLandmarks={preflight?.faceLandmarks ?? null} hairAnchor={hairEstimate?.anchor ?? null} sourceFileId={sourceFileId} onReset={reset} />;
   }
 
   const isWorking = ["validating", "uploading", "starting", "processing"].includes(stage);
