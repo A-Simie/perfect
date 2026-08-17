@@ -42,9 +42,9 @@ const styleFlowSchema = z.object({
   shoePresentation: z.enum(["female", "male"]).nullable().default(null),
   presentation: z.enum(["female", "male"]).nullable().default(null),
   occasion: z.enum(["wedding", "work", "evening", "casual", "formal"]).nullable().default(null),
-  clothingItemIndex: z.number().int().min(1).max(10).nullable().default(null),
-  shoesItemIndex: z.number().int().min(1).max(10).nullable().default(null),
-  necklaceItemIndex: z.number().int().min(1).max(10).nullable().default(null),
+  clothingItemIndex: z.number().int().min(1).max(20).nullable().default(null),
+  shoesItemIndex: z.number().int().min(1).max(20).nullable().default(null),
+  necklaceItemIndex: z.number().int().min(1).max(20).nullable().default(null),
   updatedAt: z.number(),
 });
 

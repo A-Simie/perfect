@@ -51,6 +51,19 @@ export function ClothingFlowClient() {
     try { const dataUrl = await bodyPreview(file); updateStyleFlow({ bodyDataUrl: dataUrl }); setFlow((current) => current ? { ...current, bodyDataUrl: dataUrl } : current); } catch (error) { toast.error(error instanceof Error ? error.message : "We could not prepare that image."); }
   };
 
+  const useSampleBody = async () => {
+    const presentation = flow.presentation === "male" ? "masculine" : "feminine";
+    try {
+      const response = await fetch(`/catalog/sample-body-${presentation}.jpg`);
+      if (!response.ok) throw new Error("The demo photo could not be loaded.");
+      const blob = await response.blob();
+      await chooseBody(new File([blob], `perfection-${presentation}-demo.jpg`, { type: "image/jpeg" }));
+      toast.success("Demo full-body photo added.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The demo photo could not be loaded.");
+    }
+  };
+
   const applyClothing = async () => {
     if (!flow.clothingFocus || !flow.clothingItemIndex || !flow.presentation || !flow.occasion || !bodyFile || applying) return;
     const controller = new AbortController(); setApplying(true); setAttempt(0);
@@ -72,9 +85,16 @@ export function ClothingFlowClient() {
         </div>
         <div>
           <p className="eyebrow"><Shirt size={13} /> Clothing focus</p>
-          <div className="mt-4 flex flex-wrap gap-2">{([['female','Feminine'],['male','Masculine']] as const).map(([value,label]) => <button type="button" key={value} onClick={() => { updateStyleFlow({ presentation: value }); setFlow({ ...flow, presentation: value }); }} className={flow.presentation === value ? "button-dark" : "button-outline"}>{label}</button>)}</div>
+          <div className="mt-4 flex flex-wrap gap-2">{([['female','Feminine'],['male','Masculine']] as const).map(([value,label]) => <button type="button" key={value} onClick={() => { updateStyleFlow({ presentation: value, clothingItemIndex: null }); setFlow({ ...flow, presentation: value, clothingItemIndex: null }); }} className={flow.presentation === value ? "button-dark" : "button-outline"}>{label}</button>)}</div>
           <div className="mt-3 flex flex-wrap gap-2">{occasions.map((occasion) => <button type="button" key={occasion} onClick={() => { updateStyleFlow({ occasion }); setFlow({ ...flow, occasion }); }} className={`rounded-[6px] border px-3 py-2 text-[10px] uppercase ${flow.occasion === occasion ? "border-[var(--burgundy)] bg-[var(--burgundy)] text-white" : "border-[var(--line)]"}`}>{occasion}</button>)}</div>
-          <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-[8px] border border-dashed border-[var(--outline-variant)] bg-[var(--paper)] p-3 text-xs text-[var(--muted-ink)] hover:border-[var(--burgundy)]"><Upload size={16} /><span className="flex-1">{bodyFile?.name ?? "Upload a full-body photo for clothing and shoes"}</span><input type="file" accept="image/jpeg,image/png" className="sr-only" onChange={(event) => void chooseBody(event.target.files?.[0])} /></label>
+          <label className="mt-4 flex min-h-14 cursor-pointer items-center gap-3 rounded-[8px] border border-dashed border-[var(--outline-variant)] bg-[var(--paper)] p-3 text-xs text-[var(--muted-ink)] hover:border-[var(--burgundy)]"><Upload size={17} className="shrink-0" /><span className="flex-1"><strong className="block text-[var(--ink)]">{bodyFile ? "Body photo ready" : "Upload a full-body photo"}</strong><span className="mt-0.5 block truncate">{bodyFile?.name ?? "JPEG or PNG, up to 10 MB"}</span></span><input type="file" accept="image/jpeg,image/png" className="sr-only" onChange={(event) => void chooseBody(event.target.files?.[0])} /></label>
+          <div className="mt-2 flex flex-col gap-3 border-l-2 border-[var(--blush)] pl-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[11px] leading-5 text-[var(--muted-ink)]">
+              <p className="font-semibold text-[var(--ink)]">For a successful clothing try-on</p>
+              <p>Show one person from head to feet, standing straight and facing forward. Keep arms away from the outfit and use an image at least 480 px on its shortest side.</p>
+            </div>
+            <button type="button" onClick={() => void useSampleBody()} className="button-outline shrink-0"><FileImage size={14} /> Use demo photo</button>
+          </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {focusOptions.map((option) => {
               const selected = flow.clothingFocus === option.value;
@@ -83,7 +103,7 @@ export function ClothingFlowClient() {
           </div>
           <p className="eyebrow mt-7">Palette colors</p>
           <div className="mt-3 flex flex-wrap gap-3">{flow.profile.palette.clothingColors.map((color) => <div key={color.name} className="w-20"><div className="h-14 rounded-[6px] border border-black/10" style={{ backgroundColor: color.hex }} /><p className="mt-1.5 text-[10px] text-[var(--muted-ink)]">{color.name}</p></div>)}</div>
-          {flow.clothingFocus && <><p className="eyebrow mt-7">MVP catalog</p><div className="mt-3 grid grid-cols-5 gap-2">{Array.from({ length: 10 }, (_, index) => index + 1).map((itemIndex) => <button type="button" key={itemIndex} onClick={() => { updateStyleFlow({ clothingItemIndex: itemIndex }); setFlow({ ...flow, clothingItemIndex: itemIndex }); }} className={`relative aspect-square overflow-hidden rounded-[6px] border bg-white ${flow.clothingItemIndex === itemIndex ? "border-[var(--burgundy)]" : "border-[var(--line)]"}`}><span className="absolute inset-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(/catalog/outfit-${flow.clothingFocus}-${String(itemIndex).padStart(2, "0")}.jpg)` }} /></button>)}</div></>}
+          {flow.clothingFocus && flow.presentation && <><p className="eyebrow mt-7">MVP catalog</p><div className="mt-3 grid grid-cols-5 gap-2">{Array.from({ length: 10 }, (_, index) => index + (flow.presentation === "male" ? 11 : 1)).map((itemIndex) => <button type="button" key={itemIndex} onClick={() => { updateStyleFlow({ clothingItemIndex: itemIndex }); setFlow({ ...flow, clothingItemIndex: itemIndex }); }} className={`relative aspect-square overflow-hidden rounded-[6px] border bg-white ${flow.clothingItemIndex === itemIndex ? "border-[var(--burgundy)]" : "border-[var(--line)]"}`}><span className="absolute inset-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(/catalog/outfit-${flow.clothingFocus}-${String(itemIndex).padStart(2, "0")}.jpg)` }} /></button>)}</div></>}
         </div>
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-5"><span className="flex items-center gap-2 text-xs text-[var(--muted-ink)]">{bodyFile ? <FileImage size={14} /> : "A full-body image is required for this step."}{applying && ` Applying · status ${attempt}`}</span><button type="button" onClick={() => void applyClothing()} disabled={!flow.clothingFocus || !flow.clothingItemIndex || !flow.presentation || !flow.occasion || !bodyFile || applying} className="button-dark disabled:cursor-not-allowed disabled:opacity-40">{applying ? "Applying clothing" : "Find clothing"} <ArrowRight size={14} /></button></div>
