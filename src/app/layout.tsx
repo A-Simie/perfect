@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Perfection — Your beauty, perfected",
   description:
     "An AI personal stylist that creates considered looks around you, your features, and every important moment.",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

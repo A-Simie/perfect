@@ -411,13 +411,14 @@ export function BeautyProfileClient({ firstName }: Props) {
               {isWorking && <BeautyProfileProcessing label={workingCopy?.label ?? "Creating profile"} />}
             </div>
           ) : (
-            <div className={`flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed px-5 text-center ${isDragging ? "border-[var(--burgundy)] bg-[var(--blush)]/25" : "border-[var(--outline-variant)]"}`}>
+            <div className={`relative flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed px-5 text-center ${isDragging ? "border-[var(--burgundy)] bg-[var(--blush)]/25" : "border-[var(--outline-variant)]"}`}>
               <p className="eyebrow">Add one clear portrait</p>
               <div className="mt-5 grid w-full max-w-sm gap-3 sm:grid-cols-2">
                 <button type="button" onClick={() => setCameraOpen(true)} className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[8px] border border-[var(--outline-variant)] bg-[var(--paper)] px-4 hover:border-[var(--burgundy)] hover:bg-[var(--surface-container-low)]"><Camera size={20} /><strong className="text-xs">Take a photo</strong></button>
                 <button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[8px] border border-[var(--outline-variant)] bg-[var(--paper)] px-4 hover:border-[var(--burgundy)] hover:bg-[var(--surface-container-low)]"><Upload size={20} /><strong className="text-xs">Upload a photo</strong></button>
               </div>
               <p className="mt-3 text-[10px] text-[var(--muted-ink)]">JPEG or PNG · up to 10 MB · drag and drop supported</p>
+              {isWorking && <BeautyProfileProcessing label={workingCopy?.label ?? "Checking your photo"} />}
             </div>
           )}
           <input ref={inputRef} type="file" accept="image/jpeg,image/png" className="sr-only" onChange={(event) => void chooseFile(event.target.files?.[0])} />
