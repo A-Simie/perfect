@@ -63,10 +63,15 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: result.data.email,
-    password: result.data.password,
-  });
+  let error;
+  try {
+    ({ error } = await supabase.auth.signInWithPassword({
+      email: result.data.email,
+      password: result.data.password,
+    }));
+  } catch {
+    return { error: "Unable to reach the login service. Check your connection and try again." };
+  }
 
   if (error) {
     // If the email is registered but not verified yet, send them to the verify page
