@@ -4,6 +4,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 See [PERFECT_CORP_API_PLAN.md](./PERFECT_CORP_API_PLAN.md) for the selected face, clothing, shoes, jewelry, and makeup try-on APIs and the implementation sequence.
 
+## Your Perfect Profile Card
+
+After completing your style analysis, Perfection generates a **Perfect Profile Card** — a lifestyle card that captures your unique style identity at a glance.
+
+The card includes:
+
+- **Beauty Palette** — Your personalized color palette derived from skin tone, hair, eye, lip, and eyebrow color analysis.
+- **Style Tags** — Curated descriptors (e.g. *Warm Autumn*, *Deep Cool*) that summarize your color profile and guide recommendations.
+- **Coordinated Look Preview** — A snapshot of your AI-rendered outfit, makeup, jewelry, and footwear selections working together.
+- **Occasion & Presentation Context** — The styling direction you chose (casual, formal, editorial, etc.) reflected in the card layout.
+
+The card is designed to be saved, shared, or used as a reference for future styling sessions. It turns a complex, multi-step AI analysis into one cohesive visual you can come back to.
+
 ## Getting Started
 
 First, run the development server:
